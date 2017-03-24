@@ -48,6 +48,7 @@ public class PlacingObjectsController : MonoBehaviour, ITangoPose, ITangoEvent, 
     public RectTransform stationPanel;
     public RectTransform imagePanel;
     public RectTransform dropdownPanel;
+    private int imageIndex = 0;
 
     /// <summary>
     /// The point cloud object in the scene.
@@ -325,66 +326,22 @@ public class PlacingObjectsController : MonoBehaviour, ITangoPose, ITangoEvent, 
     public void nonAdminHandler()
     {
         stationPanel.gameObject.SetActive(true);
-        stationPanel.GetComponent<StationPanelController>().imagePanel.SetActive(false);
-        displayDropdown();
-        
+        showImagePanel();
     }
 
   
 
-    public void displayDropdown()
+    
+
+    private void showImagePanel()
     {
-        GameObject dropdownPanel = stationPanel.GetComponent<StationPanelController>().dropdownPanel;
-        dropdownPanel.SetActive(true);
-        Dropdown dd = dropdownPanel.GetComponentInChildren<Dropdown>();
-        //Dropdown dd = stationPanel.GetComponent<StationPanelController>().dropdowns[0];
-        dd.ClearOptions();
-  
-        dd.GetComponentInChildren<SpecificStationDropdownScript>().station = m_selectedObject.gameObject;
-        foreach (Sprite s in m_selectedObject.m_images)
-        {
-            dd.options.Add(new Dropdown.OptionData() { text = s.name });
-        }
-
-        //dropdownPanel.gameObject.SetActive(true);
-
-
-        Rect chooseImageRect = new Rect(0, Screen.height - 150, 400, 150);
-        if(GUI.Button(chooseImageRect, "<size=50>Show Image</size>"))
-        {
-            //dropdownPanel.SetActive(false);
-           
-            showImagePanel(dd);
-            
-            
-            //imagePanel.gameObject.SetActive(true);
-        }
-
-        Rect goBackRect = new Rect(0, 0, 400, 150);
-        if (GUI.Button(goBackRect, "<size=50>go back</size>"))
-        {
-            dropdownPanel.SetActive(false);
-            stationPanel.gameObject.SetActive(false);
-            m_selectedObject = null;
-            m_selectedRect = new Rect();
-        }
-
-        else
-        {
-            m_selectedRect = goBackRect;
-        }
-    }
-
-    private void showImagePanel(Dropdown dd)
-    {
-        imagePanel.GetComponentInChildren<Image>().sprite = m_selectedObject.m_images[dd.value];
+        checkIfSwiped();
+        imagePanel.GetComponentInChildren<Image>().sprite = m_selectedObject.m_images[imageIndex];
         
-
-        //imagePanel.gameObject.SetActive(true);
-        stationPanel.GetChild(1).gameObject.SetActive(false);
         imagePanel.gameObject.SetActive(true);
+
         Rect backFromImage = new Rect(0, 0, 400, 150);
-        if (GUI.Button(backFromImage, "<size=50>go back</size>"))
+        if (GUI.Button(backFromImage, "<size=50>back</size>"))
         {
             imagePanel.gameObject.SetActive(false);
             stationPanel.gameObject.SetActive(false);
@@ -393,10 +350,34 @@ public class PlacingObjectsController : MonoBehaviour, ITangoPose, ITangoEvent, 
         }
         else
         {
-            m_selectedRect = backFromImage;
+            //m_selectedRect = backFromImage;
         }
 
     }
+
+    private void checkIfSwiped()
+    {
+        SwipeScript swipeScript = gameObject.GetComponent<SwipeScript>();
+        if (swipeScript.movingLeft)
+        {
+            swipeScript.movingLeft = false;
+            imageIndex--;
+            if (imageIndex < 0)
+            {
+                imageIndex = m_selectedObject.m_images.Length - 1;
+            }
+        } else if (swipeScript.movingRight)
+        {
+            swipeScript.movingRight = false;
+            imageIndex++;
+            if (imageIndex >= m_selectedObject.m_images.Length)
+            {
+                imageIndex = 0;
+            }
+        }
+    }
+
+    
 
     public void adminHandler()
     {
